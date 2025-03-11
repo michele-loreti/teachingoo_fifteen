@@ -67,6 +67,15 @@ public class PuzzleBoard {
         freeColumn = size-1;
     }
 
+    public boolean move(SlidingDirection direction) {
+        return switch (direction) {
+            case UP -> moveUp();
+            case DOWN -> moveDown();
+            case LEFT -> moveLeft();
+            case RIGHT -> moveRight();
+        };
+    }
+
     /**
      * Slides up the tile below the unoccupied position. Returns true
      * if the move is valid, false otherwise.

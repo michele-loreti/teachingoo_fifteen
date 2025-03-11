@@ -27,6 +27,14 @@ package it.unicam.cs.oo.fifteen;
 public enum SlidingDirection {
     UP, DOWN, LEFT, RIGHT;
 
+    /**
+     * Returns the sliding direction associated with the given char.
+     *
+     * @param c a char
+     * @return the sliding direction associated with the given char.
+     * @throws IllegalArgumentException when 'c' is not a valid char
+     * ('u', 'U', 'd', 'D', 'l', 'L', 'r', 'R').
+     */
     public static SlidingDirection fromString(char c) {
         c = Character.toUpperCase(c);
         return switch (c) {

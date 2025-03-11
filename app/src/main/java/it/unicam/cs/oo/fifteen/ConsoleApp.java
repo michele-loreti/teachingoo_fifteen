@@ -108,21 +108,10 @@ public class ConsoleApp {
         boolean flag = true;
         boolean rightCommand = true;
         String command = input.nextLine();
-        switch (command.charAt(0)) {
-            case 'u':
-                flag = board.moveUp();
-                break;
-            case 'd':
-                flag = board.moveDown();
-                break;
-            case 'l':
-                flag = board.moveLeft();
-                break;
-            case 'r':
-                flag = board.moveRight();
-                break;
-            default:
-                rightCommand = false;
+        try {
+            flag = board.move(SlidingDirection.fromString(command.charAt(0)));
+        } catch (IllegalArgumentException e) {
+            rightCommand = false;
         }
         if (!flag) {
             System.out.println("\n\nERROR: Illegal move!\n\n");
