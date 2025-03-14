@@ -24,6 +24,8 @@
 
 package it.unicam.cs.oo.fifteen;
 
+import java.util.Random;
+
 /**
  * A simple class that models the 15 puzzle game.
  */
@@ -32,8 +34,9 @@ public class PuzzleBoard {
     public static final int DEFAULT_SIZE = 4;
 
     private int[][] puzzleBoard;
-    private int freeRow;
-    private int freeColumn;
+    private Location freeCell;
+
+    private int shuffleDegree;
 
     /**
      * Creates a new instance with the default dimension 4.
@@ -63,81 +66,60 @@ public class PuzzleBoard {
                 puzzleBoard[r][c] = (counter++)%(size*size);
             }
         }
-        freeRow = size-1;
-        freeColumn = size-1;
+        freeCell = new Location(size-1, size-1, size);
+        shuffleDegree = 0;
     }
 
+    /**
+     * Executes the movement corresponding to the given slinding direction.
+     * Returns true if the action is valid.
+     *
+     * @param direction movement direction
+     * @return true if the action is valid.
+     */
     public boolean move(SlidingDirection direction) {
-        return switch (direction) {
-            case UP -> moveUp();
-            case DOWN -> moveDown();
-            case LEFT -> moveLeft();
-            case RIGHT -> moveRight();
-        };
+        Location movingCell = freeCell.whoIsMoving(direction);
+        if (isValid(movingCell)) {
+            swap(movingCell, freeCell);
+            freeCell = movingCell;
+            return true;
+        } else {
+            return false;
+        }
     }
 
-    /**
-     * Slides up the tile below the unoccupied position. Returns true
-     * if the move is valid, false otherwise.
-     *
-     * @return true if the move is valid, false otherwise.
-     */
-    public boolean moveUp() {
-        if (freeRow < puzzleBoard.length-1) {
-            puzzleBoard[freeRow][freeColumn] = puzzleBoard[freeRow+1][freeColumn];
-            freeRow++;
-            puzzleBoard[freeRow][freeColumn] = 0;
-            return true;
-        }
-        return false;
+    private void swap(Location l1, Location l2) {
+        int delta = getShuffleDegree(l1)+getShuffleDegree(l2);
+        int temp = get(l1);
+        set(l1, get(l2));
+        set(l2, temp);
+        shuffleDegree += getShuffleDegree(l1)+getShuffleDegree(l2)-delta;
     }
 
-    /**
-     * Slides down the tile above the unoccupied position. Returns true
-     * if the move is valid, false otherwise.
-     *
-     * @return true if the move is valid, false otherwise.
-     */
-    public boolean moveDown() {
-        if (freeRow > 0) {
-            puzzleBoard[freeRow][freeColumn] = puzzleBoard[freeRow-1][freeColumn];
-            freeRow--;
-            puzzleBoard[freeRow][freeColumn] = 0;
-            return true;
+    public void shuffle(int n) {
+        Random r = new Random();
+        for(int i = 0; i < n; i++) {
+            SlidingDirection[] directions = validMoves();
+            move(directions[r.nextInt(directions.length)]);
         }
-        return false;
     }
 
-    /**
-     * Slides left the tile at the right of the unoccupied position. Returns true
-     * if the move is valid, false otherwise.
-     *
-     * @return true if the move is valid, false otherwise.
-     */
-    public boolean moveLeft() {
-        if (freeColumn < puzzleBoard.length-1) {
-            puzzleBoard[freeRow][freeColumn] = puzzleBoard[freeRow][freeColumn+1];
-            freeColumn++;
-            puzzleBoard[freeRow][freeColumn] = 0;
-            return true;
-        }
-        return false;
+    public SlidingDirection[] validMoves() {
+        return freeCell.getValidMoves();
     }
 
-    /**
-     * Slides right the tile at the left of the unoccupied position. Returns true
-     * if the move is valid, false otherwise.
-     *
-     * @return true if the move is valid, false otherwise.
-     */
-    public boolean moveRight() {
-        if (freeColumn > 0) {
-            puzzleBoard[freeRow][freeColumn] = puzzleBoard[freeRow][freeColumn-1];
-            freeColumn--;
-            puzzleBoard[freeRow][freeColumn] = 0;
-            return true;
-        }
-        return false;
+    private void set(Location freeCell, int v) {
+        puzzleBoard[freeCell.getRow()][freeCell.getColumn()] = v;
+    }
+
+    private int get(Location loc) {
+        return get(loc.getRow(), loc.getColumn());
+    }
+
+    private boolean isValid(Location loc) {
+        return (loc.getRow()>=0)&&(loc.getColumn()>=0)
+                &&(loc.getRow()<puzzleBoard.length)
+                &&(loc.getColumn()< puzzleBoard.length);
     }
 
     /**
@@ -146,16 +128,13 @@ public class PuzzleBoard {
      * @return true if the puzzle is solved.
      */
     public boolean isSolved() {
-        int counter = 1;
-        int max = puzzleBoard.length*puzzleBoard.length;
-        for(int i = 0; i < puzzleBoard.length; i++) {
-            for(int j = 0; j < puzzleBoard.length; j++) {
-                if (puzzleBoard[i][j] != (counter++)%(max*max)) {
-                    return false;
-                }
-            }
-        }
-        return true;
+        return shuffleDegree == 0;
+    }
+
+    private Location getLocationOf(int v) {
+        return new Location((v-1)/puzzleBoard.length,
+                (v-1)%puzzleBoard.length,
+                puzzleBoard.length);
     }
 
     /**
@@ -191,5 +170,14 @@ public class PuzzleBoard {
      */
     public int get(int i, int j) {
         return puzzleBoard[i][j];
+    }
+
+    private int getShuffleDegree(Location loc) {
+        if (isValid(loc)) {
+            if (get(loc)==0) return 0;
+            return loc.distanceTo(getLocationOf(get(loc)));
+        } else {
+            return -1;
+        }
     }
 }
